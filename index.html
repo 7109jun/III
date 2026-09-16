@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ssuuu - Private Search & Gateway</title>
+    <style>
+        :root {
+            --bg-color: #0f1115;
+            --card-bg: #1a1d24;
+            --text-color: #f3f4f6;
+            --accent-color: #3b82f6;
+            --border-color: #2d3748;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        /* 메인 홈 화면 */
+        .home-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, #60a5fa, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        p.subtitle {
+            color: #9ca3af;
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            display: flex;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            padding: 8px 15px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            transition: border-color 0.3s;
+        }
+
+        .search-box:focus-within {
+            border-color: var(--accent-color);
+        }
+
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-color);
+            font-size: 1rem;
+            padding: 8px 12px;
+        }
+
+        .search-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .search-btn:hover {
+            background-color: #2563eb;
+        }
+
+        /* 뷰어 화면 (Ssuuu 테두리) */
+        #viewer-container {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* 검색 카테고리 탭 스타일 */
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab-btn {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: #9ca3af;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover, .tab-btn.active {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .exit-btn {
+            color: #f87171;
+            text-decoration: none;
+            font-weight: bold;
+            background: rgba(248, 113, 113, 0.1);
+            padding: 5px 12px;
+            border-radius: 15px;
+            border: 1px solid rgba(248, 113, 113, 0.2);
+        }
+
+        .web-frame {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. 메인 화면 -->
+    <div id="homeScreen" class="home-container">
+        <h1>Ssuuu</h1>
+        <p class="subtitle">검색어 또는 웹사이트 주소를 입력하세요</p>
+
+        <form class="search-box" onsubmit="handleInput(event)">
+            <input type="text" id="userInput" class="search-input" placeholder="검색 또는 URL (예: 맛집 / https://example.com)" autocomplete="off" required>
+            <button type="submit" class="search-btn">Ssuuu 이동</button>
+        </form>
+    </div>
+
+    <!-- 2. Ssuuu 시크릿 뷰어 화면 -->
+    <div id="viewer-container">
+        <div class="top-bar">
+            <div>🔒 <b>Ssuuu 시크릿 모드</b></div>
+            
+            <!-- 이미지, 동영상, 지도, 뉴스 탭 영역 -->
+            <div class="category-tabs" id="categoryTabs" style="display:none;">
+                <!-- 동적으로 채워짐 -->
+            </div>
+
+            <a href="./" class="exit-btn">나가기</a>
+        </div>
+        <iframe id="targetFrame" class="web-frame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetUrl = urlParams.get('url');
+            const searchQuery = urlParams.get('q');
+            const type = urlParams.get('type') || 'web';
+
+            if (targetUrl) {
+                showViewer(targetUrl, false);
+            } else if (searchQuery) {
+                let searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(searchQuery)}`;
+                
+                // 탭 종류에 따른 Bing 필터 파라미터 매핑
+                if (type === 'images') searchUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(searchQuery)}`;
+                else if (type === 'videos') searchUrl = `https://www.bing.com/videos/search?q=${encodeURIComponent(searchQuery)}`;
+                else if (type === 'maps') searchUrl = `https://www.bing.com/maps?q=${encodeURIComponent(searchQuery)}`;
+                else if (type === 'news') searchUrl = `https://www.bing.com/news/search?q=${encodeURIComponent(searchQuery)}`;
+
+                showViewer(searchUrl, true, searchQuery, type);
+            }
+        });
+
+        function showViewer(srcUrl, isSearch, query = '', currentType = 'web') {
+            document.getElementById('homeScreen').style.display = 'none';
+            document.getElementById('viewer-container').style.display = 'flex';
+            document.getElementById('targetFrame').src = srcUrl;
+
+            // 검색일 경우에만 상단에 이미지/동영상/지도/뉴스 탭 노출
+            if (isSearch) {
+                const tabsContainer = document.getElementById('categoryTabs');
+                tabsContainer.style.display = 'flex';
+                tabsContainer.innerHTML = `
+                    <a href="?q=${encodeURIComponent(query)}&type=web" class="tab-btn ${currentType === 'web' ? 'active' : ''}">전체</a>
+                    <a href="?q=${encodeURIComponent(query)}&type=images" class="tab-btn ${currentType === 'images' ? 'active' : ''}">이미지</a>
+                    <a href="?q=${encodeURIComponent(query)}&type=videos" class="tab-btn ${currentType === 'videos' ? 'active' : ''}">동영상</a>
+                    <a href="?q=${encodeURIComponent(query)}&type=maps" class="tab-btn ${currentType === 'maps' ? 'active' : ''}">지도</a>
+                    <a href="?q=${encodeURIComponent(query)}&type=news" class="tab-btn ${currentType === 'news' ? 'active' : ''}">뉴스</a>
+                `;
+            }
+        }
+
+        function handleInput(event) {
+            event.preventDefault();
+            let inputVal = document.getElementById('userInput').value.trim();
+            if (!inputVal) return;
+
+            const isUrl = inputVal.startsWith('http://') || inputVal.startsWith('https://') || (!inputVal.includes(' ') && inputVal.includes('.'));
+
+            if (isUrl) {
+                if (!inputVal.startsWith('http://') && !inputVal.startsWith('https://')) {
+                    inputVal = 'https://' + inputVal;
+                }
+                window.location.href = `?url=${encodeURIComponent(inputVal)}`;
+            } else {
+                window.location.href = `?q=${encodeURIComponent(inputVal)}&type=web`;
+            }
+        }
+    </script>
+
+</body>
+</html>
