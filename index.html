@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ssuuu - Private Search & Gateway</title>
+    <title>Ssuuu - Private Secure Gateway</title>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -11,6 +11,7 @@
             --text-color: #f3f4f6;
             --accent-color: #3b82f6;
             --border-color: #2d3748;
+            --danger-color: #f87171;
         }
 
         body, html {
@@ -22,34 +23,73 @@
             color: var(--text-color);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             overflow: hidden;
-        }
-
-        /* 메인 홈 화면 */
-        .home-container {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-            padding: 20px;
         }
 
-        h1 {
-            font-size: 3.5rem;
-            margin-bottom: 5px;
+        /* 상단 네비게이션 바 (카테고리) */
+        .navbar {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
             background: linear-gradient(135deg, #60a5fa, #a855f7);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: -1px;
+            cursor: pointer;
         }
 
-        p.subtitle {
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
             color: #9ca3af;
             font-size: 0.95rem;
-            margin-bottom: 30px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
         }
 
+        .nav-btn:hover, .nav-btn.active {
+            color: white;
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        /* 메인 콘텐츠 영역 */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .view-section {
+            width: 100%;
+            max-width: 700px;
+            display: none;
+        }
+
+        .view-section.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 검색창 및 입력 박스 */
         .search-box {
             display: flex;
             background-color: var(--card-bg);
@@ -57,13 +97,8 @@
             border-radius: 50px;
             padding: 8px 15px;
             width: 100%;
-            max-width: 600px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-            transition: border-color 0.3s;
-        }
-
-        .search-box:focus-within {
-            border-color: var(--accent-color);
+            margin-bottom: 30px;
         }
 
         .search-input {
@@ -84,64 +119,82 @@
             padding: 8px 20px;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.2s;
         }
 
-        .search-btn:hover {
-            background-color: #2563eb;
-        }
-
-        /* 뷰어 화면 (Ssuuu 테두리) */
-        #viewer-container {
-            display: none;
+        /* 카드 그리드 (즐겨찾기, SNS 등) */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
             width: 100%;
-            height: 100vh;
-            flex-direction: column;
+            margin-bottom: 30px;
         }
 
-        .top-bar {
+        .card-item {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+
+        .card-item:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .card-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-top: 5px;
+            word-break: break-all;
+        }
+
+        /* 섹션 타이틀 */
+        .section-title {
+            width: 100%;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #9ca3af;
+            text-align: left;
+        }
+
+        /* 웹뷰어 화면 (아이프레임 꽉 채우기) */
+        #viewerView {
+            position: absolute;
+            top: 61px;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 61px);
+            background: var(--bg-color);
+            display: none;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .viewer-topbar {
             background-color: var(--card-bg);
             border-bottom: 1px solid var(--border-color);
-            padding: 10px 20px;
+            padding: 8px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.9rem;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        /* 검색 카테고리 탭 스타일 */
-        .category-tabs {
-            display: flex;
-            gap: 8px;
-        }
-
-        .tab-btn {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            color: #9ca3af;
-            padding: 5px 12px;
-            border-radius: 15px;
             font-size: 0.85rem;
-            text-decoration: none;
-            transition: all 0.2s;
         }
 
-        .tab-btn:hover, .tab-btn.active {
-            background-color: var(--accent-color);
-            color: white;
-            border-color: var(--accent-color);
-        }
-
-        .exit-btn {
-            color: #f87171;
-            text-decoration: none;
-            font-weight: bold;
+        .exit-viewer-btn {
             background: rgba(248, 113, 113, 0.1);
-            padding: 5px 12px;
-            border-radius: 15px;
+            color: var(--danger-color);
             border: 1px solid rgba(248, 113, 113, 0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
         }
 
         .web-frame {
@@ -150,93 +203,242 @@
             border: none;
             background: white;
         }
+
+        .add-fav-form {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .add-fav-form input {
+            flex: 1;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: white;
+        }
+        .add-fav-form button {
+            background: #10b981;
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-    <!-- 1. 메인 화면 -->
-    <div id="homeScreen" class="home-container">
-        <h1>Ssuuu</h1>
-        <p class="subtitle">검색어 또는 웹사이트 주소를 입력하세요</p>
-
-        <form class="search-box" onsubmit="handleInput(event)">
-            <input type="text" id="userInput" class="search-input" placeholder="검색 또는 URL (예: 맛집 / https://example.com)" autocomplete="off" required>
-            <button type="submit" class="search-btn">Ssuuu 이동</button>
-        </form>
+    <!-- 상단 네비게이션 -->
+    <div class="navbar">
+        <div class="logo" onclick="switchTab('home')">Ssuuu</div>
+        <div class="nav-links">
+            <button class="nav-btn active" onclick="switchTab('home')">홈</button>
+            <button class="nav-btn" onclick="switchTab('search')">검색</button>
+            <button class="nav-btn" onclick="switchTab('news')">뉴스</button>
+            <button class="nav-btn" onclick="switchTab('sns')">SNS</button>
+        </div>
     </div>
 
-    <!-- 2. Ssuuu 시크릿 뷰어 화면 -->
-    <div id="viewer-container">
-        <div class="top-bar">
-            <div>🔒 <b>Ssuuu 시크릿 모드</b></div>
-            
-            <!-- 이미지, 동영상, 지도, 뉴스 탭 영역 -->
-            <div class="category-tabs" id="categoryTabs" style="display:none;">
-                <!-- 동적으로 채워짐 -->
-            </div>
+    <!-- 메인 콘텐츠 -->
+    <div class="main-content">
+        
+        <!-- 1. 홈 뷰 -->
+        <div id="home" class="view-section active">
+            <h1 style="font-size: 2.2rem; margin-bottom: 10px; background: linear-gradient(135deg, #60a5fa, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Ssuuu 프라이버시 허브</h1>
+            <p style="color: #9ca3af; margin-bottom: 30px;">URL 변동 없는 안전한 시크릿 환경</p>
 
-            <a href="./" class="exit-btn">나가기</a>
+            <!-- 즐겨찾기 추가 폼 -->
+            <form class="add-fav-form" onsubmit="addFavorite(event)">
+                <input type="text" id="favName" placeholder="사이트 이름 (예: 구글)" required>
+                <input type="text" id="favUrl" placeholder="주소 (예: https://google.com)" required>
+                <button type="submit">+ 즐겨찾기 추가</button>
+            </form>
+
+            <div class="section-title">⭐ 나의 즐겨찾기</div>
+            <div class="grid-container" id="favoritesGrid"></div>
+
+            <div class="section-title">🕒 최근 보존된 탭 (최대 3개)</div>
+            <div class="grid-container" id="recentTabsGrid"></div>
         </div>
-        <iframe id="targetFrame" class="web-frame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+
+        <!-- 2. 검색 뷰 -->
+        <div id="search" class="view-section">
+            <form class="search-box" onsubmit="handleSearch(event)">
+                <input type="text" id="searchInput" class="search-input" placeholder="Bing 검색 또는 URL 직접 입력..." autocomplete="off" required>
+                <button type="submit" class="search-btn">이동</button>
+            </form>
+            <div style="color: #9ca3af; text-align: center; margin-top: 20px;">
+                <p>💡 입력하신 내용은 기록에 남지 않으며 Ssuuu 안에서 안전하게 처리됩니다.</p>
+            </div>
+        </div>
+
+        <!-- 3. 뉴스 뷰 -->
+        <div id="news" class="view-section">
+            <div class="section-title">📰 주요 뉴스 및 포털 바로가기</div>
+            <div class="grid-container">
+                <div class="card-item" onclick="openWeb('https://news.google.com', 'Google 뉴스')">
+                    <div class="card-title">Google 뉴스</div>
+                </div>
+                <div class="card-item" onclick="openWeb('https://m.news.naver.com', '네이버 뉴스')">
+                    <div class="card-title">네이버 뉴스</div>
+                </div>
+                <div class="card-item" onclick="openWeb('https://www.bing.com/news', 'Bing 뉴스')">
+                    <div class="card-title">Bing 뉴스</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. SNS 뷰 -->
+        <div id="sns" class="view-section">
+            <div class="section-title">💬 소셜 네트워크 서비스 (SNS)</div>
+            <div class="grid-container">
+                <div class="card-item" onclick="openWeb('https://www.youtube.com', 'YouTube')">
+                    <div class="card-title" style="color:#ef4444;">▶ YouTube</div>
+                </div>
+                <div class="card-item" onclick="openWeb('https://www.tiktok.com', 'TikTok')">
+                    <div class="card-title">🎵 TikTok</div>
+                </div>
+                <div class="card-item" onclick="openWeb('https://www.instagram.com', 'Instagram')">
+                    <div class="card-title" style="color:#ec4899;">📸 Instagram</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 5. 내부 웹 뷰어 (URL 변동 방지용 인앱 프레임) -->
+    <div id="viewerView">
+        <div class="viewer-topbar">
+            <div>🔒 <b>Ssuuu 시크릿 보호 중</b> (<span id="viewerTitle"></span>)</div>
+            <button class="exit-viewer-btn" onclick="closeViewer()">나가기</button>
+        </div>
+        <iframe id="targetFrame" class="web-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
     </div>
 
     <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const targetUrl = urlParams.get('url');
-            const searchQuery = urlParams.get('q');
-            const type = urlParams.get('type') || 'web';
-
-            if (targetUrl) {
-                showViewer(targetUrl, false);
-            } else if (searchQuery) {
-                let searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(searchQuery)}`;
-                
-                // 탭 종류에 따른 Bing 필터 파라미터 매핑
-                if (type === 'images') searchUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(searchQuery)}`;
-                else if (type === 'videos') searchUrl = `https://www.bing.com/videos/search?q=${encodeURIComponent(searchQuery)}`;
-                else if (type === 'maps') searchUrl = `https://www.bing.com/maps?q=${encodeURIComponent(searchQuery)}`;
-                else if (type === 'news') searchUrl = `https://www.bing.com/news/search?q=${encodeURIComponent(searchQuery)}`;
-
-                showViewer(searchUrl, true, searchQuery, type);
-            }
-        });
-
-        function showViewer(srcUrl, isSearch, query = '', currentType = 'web') {
-            document.getElementById('homeScreen').style.display = 'none';
-            document.getElementById('viewer-container').style.display = 'flex';
-            document.getElementById('targetFrame').src = srcUrl;
-
-            // 검색일 경우에만 상단에 이미지/동영상/지도/뉴스 탭 노출
-            if (isSearch) {
-                const tabsContainer = document.getElementById('categoryTabs');
-                tabsContainer.style.display = 'flex';
-                tabsContainer.innerHTML = `
-                    <a href="?q=${encodeURIComponent(query)}&type=web" class="tab-btn ${currentType === 'web' ? 'active' : ''}">전체</a>
-                    <a href="?q=${encodeURIComponent(query)}&type=images" class="tab-btn ${currentType === 'images' ? 'active' : ''}">이미지</a>
-                    <a href="?q=${encodeURIComponent(query)}&type=videos" class="tab-btn ${currentType === 'videos' ? 'active' : ''}">동영상</a>
-                    <a href="?q=${encodeURIComponent(query)}&type=maps" class="tab-btn ${currentType === 'maps' ? 'active' : ''}">지도</a>
-                    <a href="?q=${encodeURIComponent(query)}&type=news" class="tab-btn ${currentType === 'news' ? 'active' : ''}">뉴스</a>
-                `;
-            }
+        // LocalStorage 관리 함수들
+        function getFavorites() {
+            return JSON.parse(localStorage.getItem('ssuuu_favs')) || [
+                { name: 'Google', url: 'https://www.google.com' },
+                { name: 'Bing', url: 'https://www.bing.com' }
+            ];
         }
 
-        function handleInput(event) {
-            event.preventDefault();
-            let inputVal = document.getElementById('userInput').value.trim();
-            if (!inputVal) return;
+        function getRecentTabs() {
+            return JSON.parse(localStorage.getItem('ssuuu_recents')) || [];
+        }
 
-            const isUrl = inputVal.startsWith('http://') || inputVal.startsWith('https://') || (!inputVal.includes(' ') && inputVal.includes('.'));
+        function saveRecentTab(name, url) {
+            let recents = getRecentTabs();
+            // 중복 제거 후 맨 앞에 추가
+            recents = recents.filter(item => item.url !== url);
+            recents.unshift({ name, url });
+            // 최대 3개까지만 유지
+            if (recents.length > 3) recents.pop();
+            localStorage.setItem('ssuuu_recents', JSON.stringify(recents));
+            renderRecents();
+        }
+
+        // 화면 렌더링
+        function renderFavorites() {
+            const favs = getFavorites();
+            const grid = document.getElementById('favoritesGrid');
+            grid.innerHTML = '';
+            favs.forEach((fav, index) => {
+                grid.innerHTML += `
+                    <div class="card-item" onclick="openWeb('${fav.url}', '${fav.name}')">
+                        <div class="card-title">${fav.name}</div>
+                        <div style="font-size:0.75rem; color:#6b7280; margin-top:5px; overflow:hidden; text-overflow:ellipsis;">${fav.url}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderRecents() {
+            const recents = getRecentTabs();
+            const grid = document.getElementById('recentTabsGrid');
+            if (recents.length === 0) {
+                grid.innerHTML = `<div style="color: #6b7280; font-size: 0.9rem;">최근 방문한 탭이 없습니다.</div>`;
+                return;
+            }
+            grid.innerHTML = '';
+            recents.forEach(item => {
+                grid.innerHTML += `
+                    <div class="card-item" onclick="openWeb('${item.url}', '${item.name}')">
+                        <div class="card-title">🕒 ${item.name}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function addFavorite(event) {
+            event.preventDefault();
+            const name = document.getElementById('favName').value.trim();
+            let url = document.getElementById('favUrl').value.trim();
+            if (!url.startsWith('http')) url = 'https://' + url;
+
+            const favs = getFavorites();
+            favs.push({ name, url });
+            localStorage.setItem('ssuuu_favs', JSON.stringify(favs));
+
+            document.getElementById('favName').value = '';
+            document.getElementById('favUrl').value = '';
+            renderFavorites();
+        }
+
+        // 탭 전환 시스템 (URL 절대 안 바뀜)
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            event && event.target.classList.add('active');
+            
+            // 뷰어가 열려있다면 닫기
+            closeViewer();
+        }
+
+        // 웹사이트 열기 (인앱 뷰어 가동, URL 변경 없음)
+        function openWeb(url, title) {
+            document.getElementById('viewerTitle').textContent = title;
+            document.getElementById('targetFrame').src = url;
+            document.getElementById('viewerView').style.display = 'flex';
+            
+            // 최근 탭 3개 보존 기능에 추가
+            saveRecentTab(title, url);
+        }
+
+        function closeViewer() {
+            document.getElementById('viewerView').style.display = 'none';
+            document.getElementById('targetFrame').src = 'about:blank';
+        }
+
+        // 검색창 처리
+        function handleSearch(event) {
+            event.preventDefault();
+            let input = document.getElementById('searchInput').value.trim();
+            if (!input) return;
+
+            let targetUrl = input;
+            const isUrl = input.startsWith('http://') || input.startsWith('https://') || (!input.includes(' ') && input.includes('.'));
 
             if (isUrl) {
-                if (!inputVal.startsWith('http://') && !inputVal.startsWith('https://')) {
-                    inputVal = 'https://' + inputVal;
-                }
-                window.location.href = `?url=${encodeURIComponent(inputVal)}`;
+                if (!input.startsWith('http')) targetUrl = 'https://' + input;
             } else {
-                window.location.href = `?q=${encodeURIComponent(inputVal)}&type=web`;
+                targetUrl = `https://www.bing.com/search?q=${encodeURIComponent(input)}`;
             }
+
+            openWeb(targetUrl, input);
         }
+
+        // 초기 실행
+        window.addEventListener('DOMContentLoaded', () => {
+            renderFavorites();
+            renderRecents();
+        });
     </script>
 
 </body>
